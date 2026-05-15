@@ -1,35 +1,39 @@
-name: Build and Release
+name: Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest  # Necessary for VS 2017/MSBuild environments
+    runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Add NuGet to path for restoring packages
-      - name: Add NuGet
-        uses: NuGet/setup-nuget@v1.2.0
-
-      # Set up MSBuild.exe
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # Restore packages
-      - name: Restore Packages
-        run: nuget restore your-solution.sln
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
 
-      # Build in Release Mode
-      - name: Build in Release
-        run: msbuild your-solution.sln /p:configuration=Release
+      - name: Restore NuGet packages
+        run: nuget restore BorderlessGaming.sln
 
-      # Upload Artifact
-      - name: Upload Build Artifact
+      - name: Build solution (Release)
+        run: |
+          msbuild BorderlessGaming.sln `
+            /p:Configuration=Release `
+            /p:Platform="Any CPU" `
+            /m
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ReleaseBuild
-          path: bin/Release/  # Adjust path based on your project structure
+          name: BorderlessGaming-Release
+          path: BorderlessGaming/bin/Release/
+          if-no-files-found: error
